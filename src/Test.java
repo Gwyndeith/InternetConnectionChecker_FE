@@ -41,7 +41,22 @@ public class Test {
 
     public static void runPingTest(ObjectOutputStream oos, ObjectInputStream ois) {
         try {
-            oos.writeObject(System.currentTimeMillis());
+            starttime=oos.writeObject(System.currentTimeMillis());
+            URL url = new URL ("https://uploadpath");
+            HttpURLConnection con = (HttpURLConnection)url.openConnection();
+            con.setRequestMethod("POST");
+            con.setDoOutput(true);
+            private void sendFile(OutputStream out, String name, InputStream in, String fileName) {
+                String o = "Content-Disposition: form-data; name=\"" + URLEncoder.encode(name,"UTF-8")
+                        + "\"; filename=\"" + URLEncoder.encode(filename,"UTF-8") + "\"\r\n\r\n";
+                out.write(o.getBytes(StandardCharsets.UTF_8));
+                byte[] buffer = new byte[2048];
+                for (int n = 0; n >= 0; n = in.read(buffer))
+                    out.write(buffer, 0, n);
+                out.write("\r\n".getBytes(StandardCharsets.UTF_8));
+            }
+            endtime=oos.writeObject(System.currentTimeMillis());
+            return endtime-starttime;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -49,7 +64,24 @@ public class Test {
 
     public static void runDownloadTest(ObjectOutputStream oos, ObjectInputStream ois) {
         try {
-            oos.writeObject(System.currentTimeMillis());
+            starttime =oos.writeObject(System.currentTimeMillis());
+            File fileName = new File ("testfile.txt");
+            URL url = new URL("http://DownloadFilePath");
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            int status = con.getResponseCode();
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuffer content = new StringBuffer();
+            while ((inputLine = in.readLine()) != null) {
+                content.append(inputLine);
+            }
+            in.close();
+            con.disconnect();
+            endtime=oos.writeObject(System.currentTimeMillis());
+            // Determine size of file
+            //return size/(endtime-starttime);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -57,7 +89,23 @@ public class Test {
 
     public static void runUploadTest(ObjectOutputStream oos, ObjectInputStream ois) {
         try {
-            oos.writeObject(System.currentTimeMillis());
+            starttime=oos.writeObject(System.currentTimeMillis());
+            URL url = new URL ("https://uploadpath");
+            HttpURLConnection con = (HttpURLConnection)url.openConnection();
+            con.setRequestMethod("POST");
+            con.setDoOutput(true);
+            private void sendFile(OutputStream out, String name, InputStream in, String fileName) {
+                String o = "Content-Disposition: form-data; name=\"" + URLEncoder.encode(name,"UTF-8")
+                        + "\"; filename=\"" + URLEncoder.encode(filename,"UTF-8") + "\"\r\n\r\n";
+                out.write(o.getBytes(StandardCharsets.UTF_8));
+                byte[] buffer = new byte[2048];
+                for (int n = 0; n >= 0; n = in.read(buffer))
+                    out.write(buffer, 0, n);
+                out.write("\r\n".getBytes(StandardCharsets.UTF_8));
+            }
+            endtime=oos.writeObject(System.currentTimeMillis());
+            // Determine size of file
+            //return size/(endtime-starttime);
         } catch (IOException e) {
             e.printStackTrace();
         }
