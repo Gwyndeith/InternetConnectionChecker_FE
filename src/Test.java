@@ -44,6 +44,7 @@ public class Test {
                 case "ping":
                     assert oos != null;
                     assert ois != null;
+                    //Sends the required message to the BE server to start the ping test process
                     System.out.println("Your ping is: " + runPingTest(oos, ois) + " ms");
                     break;
                 case "download":
@@ -58,6 +59,7 @@ public class Test {
         }
     }
 
+    //Sends the required message to the BE server to start the ping test process
     public static long runPingTest(ObjectOutputStream oos, ObjectInputStream ois) {
         long startTime = 0;
         long endTime = 0;
@@ -65,12 +67,9 @@ public class Test {
             startTime = System.currentTimeMillis();
             //Send pingTest message to the server
             oos.writeUTF("pingTest");
-            oos.flush();
-            //Give the start time to server? No need for ping test.
-            //oos.writeObject(startTime);
+            oos.flush(); //flush method sends what's been written into the OutputStream so far.
 
-            //Do not need to send any file to server for ping test
-            //sendFile(oos, "pingTest", ois, "");
+            //Reads the server's reply and informs the user accordingly.
             String receivedMessage = ois.readUTF();
             System.out.println("Server says: " + receivedMessage);
             if ("message received".equals(receivedMessage))
