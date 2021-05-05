@@ -133,18 +133,47 @@ public class Test {
     }
 
     public static void runUploadTest(ObjectOutputStream oos, ObjectInputStream ois) {
+        long startTime = 0;
+        long endTime = 0;
+        byte[] fileContent = null;
         try {
-            long startTime = System.currentTimeMillis();
-            oos.writeUTF(String.valueOf(startTime));
+            startTime = System.currentTimeMillis();
+            //oos.writeUTF(String.valueOf(startTime));
+            oos.writeUTF("uploadTest");
             oos.flush();
 
-            long endTime = System.currentTimeMillis();
-            // Determine size of file
-            //return size/(endtime-starttime);
+            //File fileName=null;
+
+            String receivedMessage = ois.readUTF();
+            System.out.println("Server says: " + receivedMessage);
+            if ("upload message received".equals(receivedMessage)) {
+                //fileName = new File("largeFile.txt");
+                try {
+                    File uploadFile = new File("/home/ec2-user/upload.txt");
+                    fileContent = Files.readAllBytes(uploadFile.toPath());
+                    oos.writeObject(fileContent);
+                    oos.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("Something went wrong with connection to server.");
+                return -1;
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        assert fileContent != null;
+        //endTime = ois.readLong();
+        System.out.println(endTime - startTime);
+        long Bps = fileContent.length / ((endTime - startTime) / 1000);
+        long KBps = Bps / 1024;
+        long Mbps = KBps / 1024;
+
+        return Mbps;
     }
+}
 
     private static void sendFile(OutputStream out, String name, InputStream in, String fileName) throws IOException {
         String o = "Content-Disposition: form-data; name=\"" + URLEncoder.encode(name, "UTF-8") + "\"; filename=\"" + URLEncoder.encode(fileName, "UTF-8") + "\"\r\n\r\n";
