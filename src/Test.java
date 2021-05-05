@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Scanner;
 
 /**
@@ -27,7 +28,7 @@ public class Test {
 
         Scanner scanner = new Scanner(System.in);
         label:
-        while(true) {
+        while (true) {
             System.out.print("ping, download or upload: ");
             String inputLine = scanner.nextLine();
             switch (inputLine) {
@@ -49,7 +50,7 @@ public class Test {
                     break;
                 case "download":
                     assert oos != null;
-                    runDownloadTest(oos, ois);
+                    System.out.println("Your download speed is: " + runDownloadTest(oos, ois) + " Mbps");
                     break;
                 case "upload":
                     assert oos != null;
@@ -72,7 +73,7 @@ public class Test {
             //Reads the server's reply and informs the user accordingly.
             String receivedMessage = ois.readUTF();
             System.out.println("Server says: " + receivedMessage);
-            if ("message received".equals(receivedMessage))
+            if ("ping message received".equals(receivedMessage))
                 endTime = System.currentTimeMillis();
             else {
                 System.out.println("Something went wrong with connection to server.");
@@ -81,33 +82,54 @@ public class Test {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return (int)(endTime - startTime);
+        return (int) (endTime - startTime);
     }
 
-    public static void runDownloadTest(ObjectOutputStream oos, ObjectInputStream ois) {
+    public static long runDownloadTest(ObjectOutputStream oos, ObjectInputStream ois) {
+        long startTime = 0;
+        long endTime = 0;
+        byte[] fileContent = null;
         try {
-            long startTime = System.currentTimeMillis();
-            oos.writeUTF(String.valueOf(startTime));
-            File fileName = new File ("testfile.txt");
-            URL url = new URL("http://DownloadFilePath");
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("GET");
-            int status = con.getResponseCode();
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(con.getInputStream()));
-            String inputLine;
-            StringBuffer content = new StringBuffer();
-            while ((inputLine = in.readLine()) != null) {
-                content.append(inputLine);
+            startTime = System.currentTimeMillis();
+            oos.writeUTF("downloadTest");
+            oos.flush();
+
+            File fileName = null;
+
+            String receivedMessage = ois.readUTF();
+            System.out.println("Server says: " + receivedMessage);
+            if ("download message received".equals(receivedMessage)) {
+                fileName = new File("largeFile.txt");
+                try {
+                    Files.deleteIfExists(fileName.toPath());
+                    System.out.println("File creation: " + fileName.createNewFile());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("Something went wrong with connection to server.");
+                return -1;
             }
-            in.close();
-            con.disconnect();
-            long endTime = System.currentTimeMillis();
-            // Determine size of file
-            //return size/(endtime-starttime);
+            try {
+                fileContent = (byte[]) ois.readObject();
+//                PrintStream fileWriter = new PrintStream(fileName);
+//                for (int i = 0; i < fileContent.length; i++)
+//                    fileWriter.print(fileContent[i]);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            endTime = System.currentTimeMillis();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        assert fileContent != null;
+        System.out.println(endTime - startTime);
+        long Bps = fileContent.length / ((endTime - startTime) / 1000);
+        long KBps = Bps / 1024;
+        long Mbps = KBps / 1024;
+
+        return Mbps;
     }
 
     public static void runUploadTest(ObjectOutputStream oos, ObjectInputStream ois) {
@@ -125,7 +147,7 @@ public class Test {
     }
 
     private static void sendFile(OutputStream out, String name, InputStream in, String fileName) throws IOException {
-        String o = "Content-Disposition: form-data; name=\"" + URLEncoder.encode(name,"UTF-8") + "\"; filename=\"" + URLEncoder.encode(fileName,"UTF-8") + "\"\r\n\r\n";
+        String o = "Content-Disposition: form-data; name=\"" + URLEncoder.encode(name, "UTF-8") + "\"; filename=\"" + URLEncoder.encode(fileName, "UTF-8") + "\"\r\n\r\n";
         out.write(o.getBytes(StandardCharsets.UTF_8));
         byte[] buffer = new byte[2048];
         for (int n = 0; n >= 0; n = in.read(buffer))
