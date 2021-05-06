@@ -1,9 +1,5 @@
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.Socket;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.net.*;
 import java.nio.file.Files;
 import java.util.Scanner;
 
@@ -17,7 +13,7 @@ public class Test {
         ObjectOutputStream oos = null;
         ObjectInputStream ois = null;
         try {
-            socket = new Socket("ec2-18-189-180-216.us-east-2.compute.amazonaws.com", 9000);
+            socket = new Socket("ec2-3-67-86-160.eu-central-1.compute.amazonaws.com", 9000);
 //            socket = new Socket("localhost", 9000);
             oos = new ObjectOutputStream(socket.getOutputStream());
             ois = new ObjectInputStream(socket.getInputStream());
@@ -54,35 +50,30 @@ public class Test {
                     break;
                 case "upload":
                     assert oos != null;
-                    runUploadTest(oos, ois);
+                    System.out.println("Your upload speed is: " + runUploadTest(oos, ois) + " Mbps");
                     break;
             }
         }
     }
 
-    //Sends the required message to the BE server to start the ping test process
+    //Sends an ICMP ping to the given IP address to ping it, and calculates and returns the time it took to do that in ms as output to console.
     public static long runPingTest(ObjectOutputStream oos, ObjectInputStream ois) {
-        long startTime = 0;
+        long startTime = System.currentTimeMillis();
         long endTime = 0;
+        boolean isPinged = false;
         try {
-            startTime = System.currentTimeMillis();
-            //Send pingTest message to the server
-            oos.writeUTF("pingTest");
-            oos.flush(); //flush method sends what's been written into the OutputStream so far.
-
-            //Reads the server's reply and informs the user accordingly.
-            String receivedMessage = ois.readUTF();
-            System.out.println("Server says: " + receivedMessage);
-            if ("ping message received".equals(receivedMessage))
-                endTime = System.currentTimeMillis();
-            else {
-                System.out.println("Something went wrong with connection to server.");
-                return -1;
-            }
+            isPinged = InetAddress.getByName("ec2-3-67-86-160.eu-central-1.compute.amazonaws.com").isReachable(2000);
+            endTime = System.currentTimeMillis();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return (int) (endTime - startTime);
+        if (isPinged) {
+            return (int) (endTime - startTime);
+        } else {
+            return -1;
+        }
     }
 
     public static long runDownloadTest(ObjectOutputStream oos, ObjectInputStream ois) {
@@ -127,12 +118,11 @@ public class Test {
         System.out.println(endTime - startTime);
         long Bps = fileContent.length / ((endTime - startTime) / 1000);
         long KBps = Bps / 1024;
-        long Mbps = KBps / 1024;
 
-        return Mbps;
+        return KBps / 1024;
     }
 
-    public static void runUploadTest(ObjectOutputStream oos, ObjectInputStream ois) {
+    public static long runUploadTest(ObjectOutputStream oos, ObjectInputStream ois) {
         long startTime = 0;
         long endTime = 0;
         byte[] fileContent = null;
@@ -149,7 +139,7 @@ public class Test {
             if ("upload message received".equals(receivedMessage)) {
                 //fileName = new File("largeFile.txt");
                 try {
-                    File uploadFile = new File("/home/ec2-user/upload.txt");
+                    File uploadFile = new File("./uploadFile.txt");
                     fileContent = Files.readAllBytes(uploadFile.toPath());
                     oos.writeObject(fileContent);
                     oos.flush();
@@ -165,22 +155,15 @@ public class Test {
         }
 
         assert fileContent != null;
-        //endTime = ois.readLong();
+        try {
+            endTime = ois.readLong();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         System.out.println(endTime - startTime);
         long Bps = fileContent.length / ((endTime - startTime) / 1000);
         long KBps = Bps / 1024;
-        long Mbps = KBps / 1024;
 
-        return Mbps;
-    }
-}
-
-    private static void sendFile(OutputStream out, String name, InputStream in, String fileName) throws IOException {
-        String o = "Content-Disposition: form-data; name=\"" + URLEncoder.encode(name, "UTF-8") + "\"; filename=\"" + URLEncoder.encode(fileName, "UTF-8") + "\"\r\n\r\n";
-        out.write(o.getBytes(StandardCharsets.UTF_8));
-        byte[] buffer = new byte[2048];
-        for (int n = 0; n >= 0; n = in.read(buffer))
-            out.write(buffer, 0, n);
-        out.write("\r\n".getBytes(StandardCharsets.UTF_8));
+        return KBps / 1024;
     }
 }
