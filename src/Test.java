@@ -14,6 +14,7 @@ public class Test {
         ObjectInputStream ois = null;
         try {
             socket = new Socket("ec2-3-67-86-160.eu-central-1.compute.amazonaws.com", 9000);
+            //To connect to a server running on localhost, Download speed on localhost will show 100 Mbps
 //            socket = new Socket("localhost", 9000);
             oos = new ObjectOutputStream(socket.getOutputStream());
             ois = new ObjectInputStream(socket.getInputStream());
@@ -85,12 +86,11 @@ public class Test {
             oos.writeUTF("downloadTest");
             oos.flush();
 
-            File fileName = null;
-
             String receivedMessage = ois.readUTF();
             System.out.println("Server says: " + receivedMessage);
             try {
                 fileContent = (byte[]) ois.readObject();
+                //Code to write the received message to a file (will write all 0, since the files do not contain any actual data, they are dummy files)
 //                PrintStream fileWriter = new PrintStream(fileName);
 //                for (int i = 0; i < fileContent.length; i++)
 //                    fileWriter.print(fileContent[i]);
@@ -102,9 +102,9 @@ public class Test {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println("Data transfer time (download): " + (endTime - startTime) + " ms");
         assert fileContent != null;
-        System.out.println(endTime - startTime);
-        long Bps = (fileContent.length * 8) / ((endTime - startTime) / 1000);
+        long Bps = (fileContent.length * 8L) / ((endTime - startTime) / 1000);
         long KBps = Bps / 1024;
 
         return KBps / 1024;
@@ -116,16 +116,12 @@ public class Test {
         byte[] fileContent = null;
         try {
             startTime = System.currentTimeMillis();
-            //oos.writeUTF(String.valueOf(startTime));
             oos.writeUTF("uploadTest");
             oos.flush();
-
-            //File fileName=null;
 
             String receivedMessage = ois.readUTF();
             System.out.println("Server says: " + receivedMessage);
             if ("upload message received".equals(receivedMessage)) {
-                //fileName = new File("largeFile.txt");
                 try {
                     File uploadFile = new File("uploadFile.txt");
                     fileContent = Files.readAllBytes(uploadFile.toPath());
@@ -142,14 +138,15 @@ public class Test {
             e.printStackTrace();
         }
 
-        assert fileContent != null;
+
         try {
             endTime = ois.readLong();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println(endTime - startTime);
-        long Bps = (fileContent.length * 8) / ((endTime - startTime) / 1000);
+        System.out.println("Data transfer time (upload): " + (endTime - startTime) + " ms");
+        assert fileContent != null;
+        long Bps = (fileContent.length * 8L) / ((endTime - startTime) / 1000);
         long KBps = Bps / 1024;
 
         return KBps / 1024;
