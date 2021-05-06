@@ -116,7 +116,7 @@ public class Test {
         }
         assert fileContent != null;
         System.out.println(endTime - startTime);
-        long Bps = fileContent.length / ((endTime - startTime) / 1000);
+        long Bps = (fileContent.length * 8) / ((endTime - startTime) / 1000);
         long KBps = Bps / 1024;
 
         return KBps / 1024;
@@ -139,7 +139,7 @@ public class Test {
             if ("upload message received".equals(receivedMessage)) {
                 //fileName = new File("largeFile.txt");
                 try {
-                    File uploadFile = new File("./uploadFile.txt");
+                    File uploadFile = new File("uploadFile.txt");
                     fileContent = Files.readAllBytes(uploadFile.toPath());
                     oos.writeObject(fileContent);
                     oos.flush();
@@ -161,7 +161,7 @@ public class Test {
             e.printStackTrace();
         }
         System.out.println(endTime - startTime);
-        long Bps = fileContent.length / ((endTime - startTime) / 1000);
+        long Bps = (fileContent.length * 8) / ((endTime - startTime) / 1000);
         long KBps = Bps / 1024;
 
         return KBps / 1024;
