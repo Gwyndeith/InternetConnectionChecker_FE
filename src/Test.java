@@ -89,18 +89,6 @@ public class Test {
 
             String receivedMessage = ois.readUTF();
             System.out.println("Server says: " + receivedMessage);
-            if ("download message received".equals(receivedMessage)) {
-                fileName = new File("largeFile.txt");
-                try {
-                    Files.deleteIfExists(fileName.toPath());
-                    System.out.println("File creation: " + fileName.createNewFile());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                System.out.println("Something went wrong with connection to server.");
-                return -1;
-            }
             try {
                 fileContent = (byte[]) ois.readObject();
 //                PrintStream fileWriter = new PrintStream(fileName);
